@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-ui
+  namespace: forecast
+spec:
+  type: NodePort
+  selector:
+    component: api-server
+    release: airflow
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080

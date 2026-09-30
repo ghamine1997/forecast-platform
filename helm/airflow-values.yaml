@@ -1,0 +1,49 @@
+executor: LocalExecutor
+
+images:
+  airflow:
+    repository: forecast-airflow
+    tag: placeholder
+    pullPolicy: IfNotPresent
+
+postgresql:
+  enabled: false
+
+data:
+  metadataConnection:
+    user: forecast
+    pass: forecast123
+    protocol: postgresql
+    host: postgres.forecast.svc.cluster.local
+    port: 5432
+    db: airflow
+    sslmode: disable
+
+redis:
+  enabled: false
+statsd:
+  enabled: false
+triggerer:
+  enabled: false
+
+env:
+  - name: POSTGRES_HOST
+    value: postgres.forecast.svc.cluster.local
+  - name: POSTGRES_DB
+    value: forecast
+  - name: MINIO_ENDPOINT
+    value: http://minio.forecast.svc.cluster.local:9000
+
+secret:
+  - envName: POSTGRES_USER
+    secretName: postgres-secret
+    secretKey: POSTGRES_USER
+  - envName: POSTGRES_PASSWORD
+    secretName: postgres-secret
+    secretKey: POSTGRES_PASSWORD
+  - envName: MINIO_USER
+    secretName: minio-secret
+    secretKey: MINIO_ROOT_USER
+  - envName: MINIO_PASSWORD
+    secretName: minio-secret
+    secretKey: MINIO_ROOT_PASSWORD
