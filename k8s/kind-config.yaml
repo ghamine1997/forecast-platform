@@ -1,0 +1,16 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: forecast
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080   # Airflow UI
+        hostPort: 30080
+      - containerPort: 30501   # Streamlit dashboard
+        hostPort: 30501
+      - containerPort: 30900   # MinIO API
+        hostPort: 30900
+      - containerPort: 30901   # MinIO web console
+        hostPort: 30901
+      - containerPort: 30432   # PostgreSQL
+        hostPort: 30432
