@@ -22,8 +22,13 @@ def forecasting_pipeline():
     def clean_data():
         from src.clean import run
         return run()
+    
+    @task
+    def engineer_features():
+        from src.features import run
+        return run()
 
-    ingest_data() >> clean_data()
+    ingest_data() >> clean_data() >> engineer_features()
 
 
 forecasting_pipeline()
