@@ -29,6 +29,8 @@ triggerer:
 env:
   - name: POSTGRES_HOST
     value: postgres.forecast.svc.cluster.local
+  - name: POSTGRES_PORT
+    value: "5432"
   - name: POSTGRES_DB
     value: forecast
   - name: MINIO_ENDPOINT
