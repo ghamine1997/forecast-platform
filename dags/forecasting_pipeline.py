@@ -22,13 +22,30 @@ def forecasting_pipeline():
     def clean_data():
         from src.clean import run
         return run()
-    
+
     @task
     def engineer_features():
         from src.features import run
         return run()
 
-    ingest_data() >> clean_data() >> engineer_features()
+    @task
+    def tune_hyperparameters():
+        from src.tune import run
+        return run()
+
+    @task
+    def train_models():
+        from src.train import run
+        return run()
+
+    @task
+    def cross_validate(training: dict):
+        from src.cross_validate import run
+        return run(training["run_id"])
+
+    trained = train_models()
+    ingest_data() >> clean_data() >> engineer_features() >> tune_hyperparameters() >> trained
+    cross_validate(trained)
 
 
 forecasting_pipeline()
