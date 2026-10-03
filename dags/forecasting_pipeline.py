@@ -1,14 +1,15 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from airflow.sdk import dag, task
 
 
 @dag(
     dag_id="forecasting_pipeline",
-    schedule=None,
+    schedule="0 2 * * 1",          # every Monday at 02:00
     start_date=datetime(2026, 1, 1),
     catchup=False,
-    default_args={"retries": 1},
+    max_active_runs=1,
+    default_args={"retries": 1, "retry_delay": timedelta(minutes=5)},
     tags=["forecast"],
 )
 def forecasting_pipeline():
@@ -53,13 +54,25 @@ def forecasting_pipeline():
         from src.register import run
         return run(evaluation["run_id"])
 
+    @task
+    def generate_forecast(registration: dict):
+        from src.forecast import run
+        return run()
+
+    @task
+    def update_dashboard(forecast: dict):
+        from src.publish import run
+        return run()
+
     trained = train_models()
     ingest_data() >> clean_data() >> engineer_features() >> tune_hyperparameters() >> trained
 
     validated = cross_validate(trained)
     evaluated = evaluate_models(trained)
     validated >> evaluated
-    register_model(evaluated)
+
+    registered = register_model(evaluated)
+    update_dashboard(generate_forecast(registered))
 
 
 forecasting_pipeline()
