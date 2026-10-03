@@ -138,3 +138,33 @@ def load_best_params(engine):
         engine,
     )
     return {row.model_name: json.loads(row.best_params) for row in df.itertuples()}
+
+# ---------- Prediction intervals for LightGBM (empirical, from CV errors) ----------
+
+INTERVAL_BINS = [0, 7, 30, np.inf]
+INTERVAL_LABELS = ["1-7 days", "8-30 days", "31+ days"]
+INTERVAL_QUANTILES = (0.10, 0.90)   # 80% interval, same width as Prophet's default
+
+
+def _horizon_bucket(horizon_day):
+    return pd.cut(horizon_day, bins=INTERVAL_BINS, labels=INTERVAL_LABELS).astype(str)
+
+
+def residual_quantiles(cv_preds):
+    """Relative CV errors (actual / predicted - 1), 10th and 90th percentiles per horizon."""
+    df = cv_preds[cv_preds["yhat"] > 0]
+    rel_err = df["sales"] / df["yhat"] - 1
+    low, high = INTERVAL_QUANTILES
+    grouped = rel_err.groupby(_horizon_bucket(df["horizon_day"]))
+    return {bucket: [float(s.quantile(low)), float(s.quantile(high))] for bucket, s in grouped}
+
+
+def add_empirical_intervals(fc, quantiles):
+    """fc needs columns yhat and horizon_day."""
+    fc = fc.copy()
+    buckets = _horizon_bucket(fc["horizon_day"])
+    low = buckets.map(lambda b: quantiles[b][0])
+    high = buckets.map(lambda b: quantiles[b][1])
+    fc["yhat_lower"] = (fc["yhat"] * (1 + low)).clip(lower=0)
+    fc["yhat_upper"] = fc["yhat"] * (1 + high)
+    return fc

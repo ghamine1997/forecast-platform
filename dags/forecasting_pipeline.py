@@ -43,9 +43,23 @@ def forecasting_pipeline():
         from src.cross_validate import run
         return run(training["run_id"])
 
+    @task
+    def evaluate_models(training: dict):
+        from src.evaluate import run
+        return run(training["run_id"])
+
+    @task
+    def register_model(evaluation: dict):
+        from src.register import run
+        return run(evaluation["run_id"])
+
     trained = train_models()
     ingest_data() >> clean_data() >> engineer_features() >> tune_hyperparameters() >> trained
-    cross_validate(trained)
+
+    validated = cross_validate(trained)
+    evaluated = evaluate_models(trained)
+    validated >> evaluated
+    register_model(evaluated)
 
 
 forecasting_pipeline()
