@@ -1,3 +1,12 @@
+"""
+### Weekly store sales forecasting pipeline
+
+Ingests sales from MinIO, cleans and engineers features, tunes Prophet and LightGBM
+with Optuna, trains, cross-validates and evaluates both, registers the winner
+(quality gate: test SMAPE < 10%), forecasts 365 days and refreshes the dashboard.
+
+Runbook: docs/RUNBOOK.md in the project repository.
+"""
 from datetime import datetime, timedelta
 
 from airflow.sdk import dag, task
@@ -9,8 +18,13 @@ from airflow.sdk import dag, task
     start_date=datetime(2026, 1, 1),
     catchup=False,
     max_active_runs=1,
-    default_args={"retries": 1, "retry_delay": timedelta(minutes=5)},
+    default_args={
+        "retries": 1,
+        "retry_delay": timedelta(minutes=5),
+        "execution_timeout": timedelta(minutes=30),
+    },
     tags=["forecast"],
+    doc_md=__doc__,
 )
 def forecasting_pipeline():
 
